@@ -5,16 +5,31 @@ import olStyles from 'ol/ol.css';
 import Map from 'ol/Map.js';
 import View from 'ol/View.js';
 import GeoJSON from 'ol/format/GeoJSON';
-import { Draw, Modify, Snap } from 'ol/interaction.js';
+import { Draw, Modify } from 'ol/interaction.js';
 import TileLayer from 'ol/layer/Tile.js';
 import VectorLayer from 'ol/layer/Vector.js';
 import OSMSource from 'ol/source/OSM.js';
 import VectorSource from 'ol/source/Vector.js';
+import { Style, Circle, Fill, Stroke } from 'ol/style.js';
+
 
 const formatOptions = {
   dataProjection: 'EPSG:4326',
   featureProjection: 'EPSG:3857',
 };
+
+const colorStroke = '#3a69c7';
+const colorFill = '#3a69c744';
+
+const style = new Style({
+  image: new Circle({
+    radius: 5,
+    fill: new Fill({ color: colorFill }),
+    stroke: new Stroke({ color: colorStroke, width: 2 }),
+  }),
+  fill: new Fill({ color: colorFill }),
+  stroke: new Stroke({ color: colorStroke, width: 3 }),
+})
 
 function getDefaultFormat() {
   return new GeoJSON(formatOptions);
@@ -53,7 +68,10 @@ export default function withMapControl({ getFormat, getMap } = {}) {
       const features = value ? [format.readFeature(value)] : [];
 
       const featuresSource = new VectorSource({ features, wrapX: false });
-      const featuresLayer = new VectorLayer({ source: featuresSource });
+      const featuresLayer = new VectorLayer({
+        source: featuresSource,
+        style,
+      });
 
       const target = this.mapContainer.current;
       const map = getMap ? getMap(target, featuresLayer) : getDefaultMap(target, featuresLayer);
@@ -61,12 +79,10 @@ export default function withMapControl({ getFormat, getMap } = {}) {
         map.getView().fit(featuresSource.getExtent(), { maxZoom: 16, padding: [80, 80, 80, 80] });
       }
 
-      const draw = new Draw({ source: featuresSource, type: field.get('type', 'Point') });
+      const draw = new Draw({ source: featuresSource, type: field.get('type', 'Polygon') });
       map.addInteraction(draw);
       const modify = new Modify({ source: featuresSource });
       map.addInteraction(modify);
-      const snap = new Snap({ source: featuresSource });
-      map.addInteraction(snap);
 
       const writeOptions = { decimals: field.get('decimals', 7) };
       draw.on('drawend', ({ feature }) => {
