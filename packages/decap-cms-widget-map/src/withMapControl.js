@@ -5,7 +5,7 @@ import olStyles from 'ol/ol.css';
 import Map from 'ol/Map.js';
 import View from 'ol/View.js';
 import GeoJSON from 'ol/format/GeoJSON';
-import Draw from 'ol/interaction/Draw.js';
+import { Draw, Modify, Snap } from 'ol/interaction.js';
 import TileLayer from 'ol/layer/Tile.js';
 import VectorLayer from 'ol/layer/Vector.js';
 import OSMSource from 'ol/source/OSM.js';
@@ -63,6 +63,10 @@ export default function withMapControl({ getFormat, getMap } = {}) {
 
       const draw = new Draw({ source: featuresSource, type: field.get('type', 'Point') });
       map.addInteraction(draw);
+      const modify = new Modify({ source: featuresSource });
+      map.addInteraction(modify);
+      const snap = new Snap({ source: featuresSource });
+      map.addInteraction(snap);
 
       const writeOptions = { decimals: field.get('decimals', 7) };
       draw.on('drawend', ({ feature }) => {
