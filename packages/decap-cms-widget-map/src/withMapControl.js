@@ -11,6 +11,7 @@ import VectorLayer from 'ol/layer/Vector.js';
 import OSMSource from 'ol/source/OSM.js';
 import VectorSource from 'ol/source/Vector.js';
 import { Style, Circle, Fill, Stroke } from 'ol/style.js';
+import { transform } from 'ol/proj.js';
 
 
 const formatOptions = {
@@ -35,11 +36,12 @@ function getDefaultFormat() {
   return new GeoJSON(formatOptions);
 }
 
-function getDefaultMap(target, featuresLayer) {
+function getDefaultMap(target, featuresLayer, latitude, longitude, zoom) {
+  console.log(latitude, longitude, zoom);
   return new Map({
     target,
     layers: [new TileLayer({ source: new OSMSource() }), featuresLayer],
-    view: new View({ center: [0, 0], zoom: 2 }),
+    view: new View({ center: transform([longitude, latitude], 'EPSG:4326', 'EPSG:3857'), zoom }),
   });
 }
 
@@ -74,12 +76,14 @@ export default function withMapControl({ getFormat, getMap } = {}) {
       });
 
       const target = this.mapContainer.current;
-      const map = getMap ? getMap(target, featuresLayer) : getDefaultMap(target, featuresLayer);
+      const map = getMap 
+        ? getMap(target, featuresLayer) 
+        : getDefaultMap(target, featuresLayer, field.get('latitude', 0), field.get('longitude', 0), field.get('zoom', 2));
       if (features.length > 0) {
         map.getView().fit(featuresSource.getExtent(), { maxZoom: 16, padding: [80, 80, 80, 80] });
       }
 
-      const draw = new Draw({ source: featuresSource, type: field.get('type', 'Polygon') });
+      const draw = new Draw({ source: featuresSource, type: field.get('type', 'Point') });
       map.addInteraction(draw);
       const modify = new Modify({ source: featuresSource });
       map.addInteraction(modify);
